@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    && docker-php-ext-install sockets \
+    && docker-php-ext-install sockets bcmath \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

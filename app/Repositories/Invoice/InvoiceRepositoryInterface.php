@@ -9,7 +9,7 @@ interface InvoiceRepositoryInterface
 {
     public function findAll(): array;
 
-    public function findById($id): ?Invoice;
+    public function findById(int $id): ?Invoice;
 
     public function findByIdAsync(int $id): PromiseInterface;
 

@@ -7,62 +7,61 @@ use PHPUnit\Framework\TestCase;
 
 class MoneyHelperTest extends TestCase
 {
-    public function testCalculateTotalWithWholeQuantity(): void
+    public function testToDecimalConvertsWholePoounds(): void
     {
-        // 5 units at £200.00 (20000p) = £1000.00 (100000p)
-        $this->assertSame(100000, MoneyHelper::calculateTotal('5.0000', 20000));
+        $this->assertSame('10.00', MoneyHelper::toDecimal(1000));
     }
 
-    public function testCalculateTotalWithDecimalQuantity(): void
+    public function testToDecimalConvertsWithPence(): void
     {
-        // 2.5 units at £190.00 (19000p) = £475.00 (47500p)
-        $this->assertSame(47500, MoneyHelper::calculateTotal('2.5000', 19000));
+        $this->assertSame('15.50', MoneyHelper::toDecimal(1550));
     }
 
-    public function testCalculateTotalRoundsToNearestPenny(): void
+    public function testToDecimalReturnsTwoDecimalPlaces(): void
     {
-        // 1.3333 units at £3.00 (300p) = 399.99p → 400p
-        $this->assertSame(400, MoneyHelper::calculateTotal('1.3333', 300));
+        $this->assertSame('0.01', MoneyHelper::toDecimal(1));
     }
 
-    public function testCalculateTotalReturnsInt(): void
+    public function testToDecimalHandlesLargeAmount(): void
     {
-        $result = MoneyHelper::calculateTotal('3.0000', 1000);
-
-        $this->assertIsInt($result);
+        $this->assertSame('1,500.00', MoneyHelper::toDecimal(150000));
     }
 
-    public function testSumItemTotalsWithMultipleItems(): void
+    public function testToPenceConvertsDecimalString(): void
     {
-        $items = [
-            ['quantity' => '10.0000', 'unitPrice' => 5000],  // 50000p
-            ['quantity' => '5.0000',  'unitPrice' => 20000], // 100000p
-        ];
-
-        $this->assertSame(150000, MoneyHelper::sumItemTotals($items));
+        $this->assertSame(1000, MoneyHelper::toPence('10.00'));
     }
 
-    public function testSumItemTotalsWithSingleItem(): void
+    public function testToPenceConvertsFloat(): void
     {
-        $items = [
-            ['quantity' => '8.0000', 'unitPrice' => 15000], // 120000p
-        ];
-
-        $this->assertSame(120000, MoneyHelper::sumItemTotals($items));
+        $this->assertSame(1550, MoneyHelper::toPence(15.50));
     }
 
-    public function testSumItemTotalsWithDecimalQuantities(): void
+    public function testToPenceConvertsInt(): void
     {
-        $items = [
-            ['quantity' => '2.5000', 'unitPrice' => 19000], // 47500p
-            ['quantity' => '1.3333', 'unitPrice' => 300],   // 400p
-        ];
-
-        $this->assertSame(47900, MoneyHelper::sumItemTotals($items));
+        $this->assertSame(1000, MoneyHelper::toPence(10));
     }
 
-    public function testSumItemTotalsReturnsZeroForEmptyArray(): void
+    public function testToPenceRoundsCorrectly(): void
     {
-        $this->assertSame(0, MoneyHelper::sumItemTotals([]));
+        // £10.005 → 1000.5p → 1001p
+        $this->assertSame(1001, MoneyHelper::toPence('10.005'));
+    }
+
+    public function testToPenceAvoidsBinaryFloatPrecisionError(): void
+    {
+        // (float) '2.675' * 100 = 267.49999... in floating point — should be 268
+        $this->assertSame(268, MoneyHelper::toPence('2.675'));
+    }
+
+    public function testToPenceReturnsInt(): void
+    {
+        $this->assertIsInt(MoneyHelper::toPence('10.00'));
+    }
+
+    public function testRoundTrip(): void
+    {
+        $original = 47500;
+        $this->assertSame($original, MoneyHelper::toPence(MoneyHelper::toDecimal($original)));
     }
 }

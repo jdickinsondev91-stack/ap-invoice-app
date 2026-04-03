@@ -1,9 +1,8 @@
-<?php 
+<?php
 
 namespace App\Services;
 
 use App\DTOs\CreateInvoiceDTO;
-use App\Helpers\MoneyHelper;
 use App\Models\Invoice;
 use App\Models\InvoiceStatus;
 use App\Models\Vendor;
@@ -17,7 +16,7 @@ use App\Validators\CreateInvoiceValidator;
 use function React\Async\await;
 use function React\Promise\all;
 
-class InvoiceService 
+class InvoiceService
 {
     public function __construct(
         private readonly InvoiceRepositoryInterface $invoiceRepository,
@@ -26,7 +25,7 @@ class InvoiceService
         private readonly InvoiceStatusHistoryRepositoryInterface $invoiceStatusHistoryRepository,
         private readonly VendorRepositoryInterface $vendorRepository,
         private readonly CreateInvoiceValidator $createInvoiceValidator
-    ){}
+    ) {}
 
     public function getById(int $id): ?Invoice
     {
@@ -36,11 +35,10 @@ class InvoiceService
             $this->invoiceItemRepository->findByInvoiceIdAsync($id),
         ]));
 
-        if (!$invoice) {
+        if ($invoice === null) {
             return null;
         }
 
-        /** @var InvoiceItem[] $items */
         $invoice->items = $items;
 
         return $invoice;
@@ -58,19 +56,17 @@ class InvoiceService
             $this->vendorRepository->findByIdAsync($dto->vendorId),
             $this->invoiceRepository->findPotentialDuplicatesAsync($dto->vendorId, $dto->invoiceNumber),
         ]));
-        
+
         /** @var InvoiceStatus $pendingStatus */
         /** @var ?Vendor $vendor */
         /** @var Invoice[] $potentialDuplicates */
 
         $this->createInvoiceValidator->validate($dto, $vendor, $potentialDuplicates);
 
-        $totalAmount = MoneyHelper::sumItemTotals(
-            array_map(
-                fn($item) => ['quantity' => $item->quantity, 'unitPrice' => $item->unitPrice],
-                $dto->items
-            )
-        );
+        $totalAmount = array_sum(array_map(
+            fn($item) => (int) round((float) $item->quantity * $item->unitPrice),
+            $dto->items
+        ));
 
         $invoice = $this->invoiceRepository->create([
             'vendor_id' => $dto->vendorId,
@@ -87,7 +83,7 @@ class InvoiceService
                 'description' => $item->description,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unitPrice,
-                'total' => MoneyHelper::calculateTotal($item->quantity, $item->unitPrice),
+                'total' => (int) round((float) $item->quantity * $item->unitPrice),
             ]),
             $dto->items
         )));

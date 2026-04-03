@@ -2,23 +2,26 @@
 
 namespace App\Helpers;
 
+use function bcadd;
+use function bcdiv;
+use function bcmul;
+
 class MoneyHelper
 {
-    public static function calculateTotal(string $quantity, int $unitPrice): int
+    public const DEFAULT_DECIMAL_PLACES = 2;
+
+    public static function toDecimal(int $pence, int $decimalPlaces = self::DEFAULT_DECIMAL_PLACES): string
     {
-        return (int) round((float) $quantity * $unitPrice);
+        return number_format(
+            (float) bcdiv((string) $pence, '100', $decimalPlaces + 2),
+            $decimalPlaces
+        );
     }
 
-    /**
-     * @param array{quantity: string, unitPrice: int}[] $items
-     */
-    public static function sumItemTotals(array $items): int
+    public static function toPence(string|float|int $amount): int
     {
-        return array_sum(
-            array_map(
-                fn(array $item) => self::calculateTotal($item['quantity'], $item['unitPrice']),
-                $items
-            )
-        );
+        $multiplied = bcmul((string) $amount, '100', 4);
+
+        return (int) bcadd($multiplied, '0.5', 0);
     }
 }

@@ -21,7 +21,7 @@ class MySqlInvoiceRepository extends MySqlRepository implements InvoiceRepositor
         );
     }
 
-    public function findById($id): ?Invoice
+    public function findById(int $id): ?Invoice
     {
         $query = $this->withRelationsSql() . 'WHERE invoices.id = ?';
 
