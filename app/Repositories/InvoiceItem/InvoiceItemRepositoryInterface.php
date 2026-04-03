@@ -13,6 +13,8 @@ interface InvoiceItemRepositoryInterface
     
     public function findByInvoiceId(int $invoiceId): array;
 
+    public function findByInvoiceIdAsync(int $invoiceId): PromiseInterface;
+
     public function create(array $data): InvoiceItem;
 
     public function createAsync(array $data): PromiseInterface;

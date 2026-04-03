@@ -169,4 +169,33 @@ class InvoiceItemRepositoryTest extends DatabaseTestCase
 
         $this->assertCount($before + 1, $after);
     }
+
+    public function testFindByInvoiceIdAsyncReturnsAllItemsForInvoice(): void
+    {
+        $items = await($this->repo->findByInvoiceIdAsync(1));
+
+        $this->assertCount(2, $items);
+        $this->assertContainsOnlyInstancesOf(InvoiceItem::class, $items);
+    }
+
+    public function testFindByInvoiceIdAsyncReturnsItemsBelongingToCorrectInvoice(): void
+    {
+        $items = await($this->repo->findByInvoiceIdAsync(2));
+
+        foreach ($items as $item) {
+            $this->assertSame(2, $item->invoiceId);
+        }
+    }
+
+    public function testFindByInvoiceIdAsyncReturnsEmptyForInvoiceWithNoItems(): void
+    {
+        await($this->db->query(
+            "INSERT INTO invoices (id, vendor_id, invoice_status_id, invoice_number, invoice_date, due_date, amount)
+             VALUES (99, 1, 1, 'INV-NO-ITEMS', '2024-05-01', '2024-05-31', 1000)"
+        ));
+
+        $items = await($this->repo->findByInvoiceIdAsync(99));
+
+        $this->assertSame([], $items);
+    }
 }

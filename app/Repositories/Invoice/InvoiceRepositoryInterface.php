@@ -11,6 +11,8 @@ interface InvoiceRepositoryInterface
 
     public function findById($id): ?Invoice;
 
+    public function findByIdAsync(int $id): PromiseInterface;
+
     public function create(array $data): Invoice;
 
     public function updateStatus(int $id, array $data): Invoice;

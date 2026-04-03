@@ -36,7 +36,19 @@ class MySqlInvoiceItemRepository extends MySqlRepository implements InvoiceItemR
             fn(array $row) => InvoiceItem::fromRow($row),
             $this->fetchAll($query, [$invoiceId])
         );
-        
+    }
+
+    public function findByInvoiceIdAsync(int $invoiceId): PromiseInterface
+    {
+        $query = 'SELECT * FROM invoice_items WHERE invoice_id = ?';
+
+        return $this->queryAsync($query, [$invoiceId])
+            ->then(
+                fn($result) => array_map(
+                    fn(array $row) => InvoiceItem::fromRow($row),
+                    $result->resultRows
+                )
+            );
     }
 
     public function create(array $data): InvoiceItem

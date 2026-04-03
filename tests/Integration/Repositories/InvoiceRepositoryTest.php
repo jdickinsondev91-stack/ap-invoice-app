@@ -223,4 +223,35 @@ class InvoiceRepositoryTest extends DatabaseTestCase
         $this->assertCount(1, await($this->repo->findPotentialDuplicatesAsync(1, 'INV-2024-001')));
         $this->assertCount(0, await($this->repo->findPotentialDuplicatesAsync(2, 'INV-2024-001')));
     }
+
+    public function testFindByIdAsyncReturnsCorrectInvoice(): void
+    {
+        $invoice = await($this->repo->findByIdAsync(1));
+
+        $this->assertInstanceOf(Invoice::class, $invoice);
+        $this->assertSame(1, $invoice->id);
+        $this->assertSame('INV-2024-001', $invoice->invoiceNumber);
+        $this->assertSame(150000, $invoice->amount);
+    }
+
+    public function testFindByIdAsyncHydratesVendor(): void
+    {
+        $invoice = await($this->repo->findByIdAsync(1));
+
+        $this->assertInstanceOf(Vendor::class, $invoice->vendor);
+        $this->assertSame('Acme Supplies Ltd', $invoice->vendor->name);
+    }
+
+    public function testFindByIdAsyncHydratesStatus(): void
+    {
+        $invoice = await($this->repo->findByIdAsync(1));
+
+        $this->assertInstanceOf(InvoiceStatus::class, $invoice->status);
+        $this->assertSame('pending', $invoice->status->slug);
+    }
+
+    public function testFindByIdAsyncReturnsNullForNonExistentId(): void
+    {
+        $this->assertNull(await($this->repo->findByIdAsync(999)));
+    }
 }

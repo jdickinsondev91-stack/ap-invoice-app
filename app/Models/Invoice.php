@@ -17,15 +17,11 @@ class Invoice extends Model
         public readonly ?Vendor $vendor = null,
         public readonly ?InvoiceStatus $status = null,
         /** @var InvoiceItem[] */
-        public readonly array $items = [],
+        public array $items = [],
         /** @var InvoiceStatusHistory[] */
-        public readonly array $history = [],
+        public array $history = [],
     ) {}
 
-    /**
-     * Hydrates a bare Invoice from a database row.
-     * Use InvoiceRepository to load with related vendor, status, items and history.
-     */
     public static function fromRow(array $row): static
     {
         self::assertRowKeys($row, [

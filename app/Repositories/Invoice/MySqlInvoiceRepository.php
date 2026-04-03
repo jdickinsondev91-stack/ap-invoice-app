@@ -30,6 +30,16 @@ class MySqlInvoiceRepository extends MySqlRepository implements InvoiceRepositor
         return $result ? $this->hydrateRelations($result) : null;
     }
 
+    public function findByIdAsync(int $id): PromiseInterface
+    {
+        $query = $this->withRelationsSql() . 'WHERE invoices.id = ?';
+
+        return $this->queryAsync($query, [$id])
+            ->then(
+                fn($result) => $result->resultRows ? $this->hydrateRelations($result->resultRows[0]) : null
+            );
+    }
+
     public function create(array $data): Invoice
     {
         $query = '

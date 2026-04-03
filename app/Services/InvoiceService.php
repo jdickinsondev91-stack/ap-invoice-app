@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\DTOs\CreateInvoiceDTO;
+use App\Helpers\MoneyHelper;
 use App\Models\Invoice;
 use App\Models\InvoiceStatus;
+use App\Models\Vendor;
 use App\Repositories\Invoice\InvoiceRepositoryInterface;
 use App\Repositories\InvoiceItem\InvoiceItemRepositoryInterface;
 use App\Repositories\InvoiceStatus\InvoiceStatusRepositoryInterface;
@@ -25,47 +28,74 @@ class InvoiceService
         private readonly CreateInvoiceValidator $createInvoiceValidator
     ){}
 
-    public function create(array $data, array $items): ?Invoice
+    public function getById(int $id): ?Invoice
     {
-        $totalAmount = 0; //TODO - Replace
-
-        [$pendingStatus, $vendor, $potentialDuplicates] = await(all([
-            $this->invoiceStatusRepository->findBySlugAsync(InvoiceStatus::STATUS_PENDING),
-            $this->vendorRepository->findByIdAsync($data['vendor_id']),
-            $this->invoiceRepository->findPotentialDuplicatesAsync($data['vendor_id'], $totalAmount, $data['invoice_date'])
+        /** @var ?Invoice $invoice */
+        [$invoice, $items] = await(all([
+            $this->invoiceRepository->findByIdAsync($id),
+            $this->invoiceItemRepository->findByInvoiceIdAsync($id),
         ]));
 
-        $this->createInvoiceValidator->validate(
-            $data,
-            $items,
-            $vendor,
-            $potentialDuplicates
+        if (!$invoice) {
+            return null;
+        }
+
+        /** @var InvoiceItem[] $items */
+        $invoice->items = $items;
+
+        return $invoice;
+    }
+
+    public function getAll(): array
+    {
+        return $this->invoiceRepository->findAll();
+    }
+
+    public function create(CreateInvoiceDTO $dto): Invoice
+    {
+        [$pendingStatus, $vendor, $potentialDuplicates] = await(all([
+            $this->invoiceStatusRepository->findBySlugAsync(InvoiceStatus::STATUS_PENDING),
+            $this->vendorRepository->findByIdAsync($dto->vendorId),
+            $this->invoiceRepository->findPotentialDuplicatesAsync($dto->vendorId, $dto->invoiceNumber),
+        ]));
+        
+        /** @var InvoiceStatus $pendingStatus */
+        /** @var ?Vendor $vendor */
+        /** @var Invoice[] $potentialDuplicates */
+
+        $this->createInvoiceValidator->validate($dto, $vendor, $potentialDuplicates);
+
+        $totalAmount = MoneyHelper::sumItemTotals(
+            array_map(
+                fn($item) => ['quantity' => $item->quantity, 'unitPrice' => $item->unitPrice],
+                $dto->items
+            )
         );
 
         $invoice = $this->invoiceRepository->create([
-            'vendor_id' => $data['vendor_id'],
+            'vendor_id' => $dto->vendorId,
             'invoice_status_id' => $pendingStatus->id,
-            'invoice_number' => $data['invoice_number'],
-            'invoice_date' => $data['invoice_date'],
-            'due_date' => $data['due_date'],
-            'amount' => $totalAmount
+            'invoice_number' => $dto->invoiceNumber,
+            'invoice_date' => $dto->invoiceDate,
+            'due_date' => $dto->dueDate,
+            'amount' => $totalAmount,
         ]);
 
-        $invoiceItems = await(all( array_map(
-            fn(array $item) => $this->invoiceItemRepository->createAsync([
+        $invoice->items = await(all(array_map(
+            fn($item) => $this->invoiceItemRepository->createAsync([
                 'invoice_id' => $invoice->id,
-                'description' => $item['description'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'total' => $item['quantity'] * $item['unit_price'] //Check this is correct with storing as pence
-            ]), $items
+                'description' => $item->description,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unitPrice,
+                'total' => MoneyHelper::calculateTotal($item->quantity, $item->unitPrice),
+            ]),
+            $dto->items
         )));
 
         // This could be an event fired after the invoice is created but for simplicity I kept it here
         $this->invoiceStatusHistoryRepository->create([
             'invoice_id' => $invoice->id,
             'invoice_status_id' => $pendingStatus->id,
-            'changed_at' => date('Y-m-d H:i:s')
         ]);
 
         return $invoice;
