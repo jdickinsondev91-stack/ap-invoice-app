@@ -40,19 +40,8 @@ $container = new Container([
 
 $app = new FrameworkX\App($container);
 
-
-// MOVE TO CONTROLLER
-$app->get('/health', function () {
-    return React\Http\Message\Response::json(['status' => 'ok']);
-});
-
-$app->get('/health/db', function () use ($db) {
-    $result = \React\Async\await($db->query('SELECT COUNT(*) as count FROM vendors'));
-
-    return React\Http\Message\Response::json([
-        'status' => 'ok',
-        'vendor_count' => $result->resultRows[0]['count'],
-    ]);
-});
+$app->get('/invoices', App\Controllers\ListInvoicesController::class);
+$app->get('/invoices/{id}', App\Controllers\GetInvoiceController::class);
+$app->post('/invoices', App\Controllers\CreateInvoiceController::class);
 
 $app->run();
