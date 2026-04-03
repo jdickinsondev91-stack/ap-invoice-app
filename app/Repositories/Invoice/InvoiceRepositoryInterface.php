@@ -3,6 +3,7 @@
 namespace App\Repositories\Invoice;
 
 use App\Models\Invoice;
+use React\Promise\PromiseInterface;
 
 interface InvoiceRepositoryInterface
 {
@@ -17,4 +18,6 @@ interface InvoiceRepositoryInterface
     public function existsByVendorAndNumber(int $vendorId, string $invoiceNumber): bool;
 
     public function findPotentialDuplicates(int $vendorId, string $invoiceNumber): array;
+
+    public function findPotentialDuplicatesAsync(int $vendorId, string $invoiceNumber): PromiseInterface;
 }

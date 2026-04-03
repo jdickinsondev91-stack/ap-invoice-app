@@ -6,6 +6,8 @@ use App\Models\InvoiceItem;
 use App\Repositories\InvoiceItem\MySqlInvoiceItemRepository;
 use App\Tests\Integration\DatabaseTestCase;
 
+use function React\Async\await;
+
 class InvoiceItemRepositoryTest extends DatabaseTestCase
 {
     private MySqlInvoiceItemRepository $repo;
@@ -55,7 +57,7 @@ class InvoiceItemRepositoryTest extends DatabaseTestCase
     public function testFindByInvoiceIdReturnsEmptyForInvoiceWithNoItems(): void
     {
         // Insert a bare invoice with no items
-        \React\Async\await($this->db->query(
+        await($this->db->query(
             "INSERT INTO invoices (id, vendor_id, invoice_status_id, invoice_number, invoice_date, due_date, amount)
              VALUES (99, 1, 1, 'INV-NO-ITEMS', '2024-05-01', '2024-05-31', 1000)"
         ));
@@ -98,6 +100,57 @@ class InvoiceItemRepositoryTest extends DatabaseTestCase
 
         $this->assertNotNull($found);
         $this->assertSame('Persisted widget', $found->description);
+    }
+
+    public function testFindByIdAsyncReturnsCorrectItem(): void
+    {
+        $item = await($this->repo->findByIdAsync(1));
+
+        $this->assertInstanceOf(InvoiceItem::class, $item);
+        $this->assertSame(1, $item->id);
+        $this->assertSame('Industrial bolts (box of 100)', $item->description);
+    }
+
+    public function testFindByIdAsyncReturnsNullForNonExistentId(): void
+    {
+        $item = await($this->repo->findByIdAsync(999));
+
+        $this->assertNull($item);
+    }
+
+    public function testCreateAsyncPersistsAndReturnsItem(): void
+    {
+        $item = await($this->repo->createAsync([
+            'invoice_id'  => 1,
+            'description' => 'Async widget',
+            'quantity'    => '3.0000',
+            'unit_price'  => 1000,
+            'total'       => 3000,
+        ]));
+
+        $this->assertInstanceOf(InvoiceItem::class, $item);
+        $this->assertSame(1, $item->invoiceId);
+        $this->assertSame('Async widget', $item->description);
+        $this->assertSame('3.0000', $item->quantity);
+        $this->assertSame(1000, $item->unitPrice);
+        $this->assertSame(3000, $item->total);
+        $this->assertIsInt($item->id);
+    }
+
+    public function testCreateAsyncPersistsToDatabase(): void
+    {
+        $created = await($this->repo->createAsync([
+            'invoice_id'  => 1,
+            'description' => 'Persisted async widget',
+            'quantity'    => '1.0000',
+            'unit_price'  => 500,
+            'total'       => 500,
+        ]));
+
+        $found = $this->repo->findById($created->id);
+
+        $this->assertNotNull($found);
+        $this->assertSame('Persisted async widget', $found->description);
     }
 
     public function testCreateAppearsInFindByInvoiceId(): void

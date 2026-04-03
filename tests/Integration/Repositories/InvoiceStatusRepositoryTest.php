@@ -6,6 +6,8 @@ use App\Models\InvoiceStatus;
 use App\Repositories\InvoiceStatus\MySqlInvoiceStatusRepository;
 use App\Tests\Integration\DatabaseTestCase;
 
+use function React\Async\await;
+
 class InvoiceStatusRepositoryTest extends DatabaseTestCase
 {
     private MySqlInvoiceStatusRepository $repo;
@@ -61,5 +63,21 @@ class InvoiceStatusRepositoryTest extends DatabaseTestCase
     public function testFindBySlugReturnsNullForNonExistentSlug(): void
     {
         $this->assertNull($this->repo->findBySlug('nonexistent'));
+    }
+
+    public function testFindBySlugAsyncReturnsCorrectStatus(): void
+    {
+        $status = await($this->repo->findBySlugAsync('approved'));
+
+        $this->assertInstanceOf(InvoiceStatus::class, $status);
+        $this->assertSame(2, $status->id);
+        $this->assertSame('approved', $status->slug);
+    }
+
+    public function testFindBySlugAsyncReturnsNullForNonExistentSlug(): void
+    {
+        $status = await($this->repo->findBySlugAsync('nonexistent'));
+
+        $this->assertNull($status);
     }
 }

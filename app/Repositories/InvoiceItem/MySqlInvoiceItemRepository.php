@@ -4,6 +4,7 @@ namespace App\Repositories\InvoiceItem;
 
 use App\Models\InvoiceItem;
 use App\Repositories\MySqlRepository;
+use React\Promise\PromiseInterface;
 
 class MySqlInvoiceItemRepository extends MySqlRepository implements InvoiceItemRepositoryInterface
 {
@@ -15,6 +16,16 @@ class MySqlInvoiceItemRepository extends MySqlRepository implements InvoiceItemR
        $result = $this->fetchOne($query, [$id]);
 
        return $result ? InvoiceItem::fromRow($result) : null;
+    }
+
+    public function findByIdAsync(int $id): PromiseInterface
+    {
+        $query = 'SELECT * FROM invoice_items WHERE id = ?';
+
+        return $this->queryAsync($query, [$id])
+            ->then(
+                fn($result) => $result->resultRows ? InvoiceItem::fromRow($result->resultRows[0]) : null
+            );
     }
 
     public function findByInvoiceId(int $invoiceId): array
@@ -55,5 +66,28 @@ class MySqlInvoiceItemRepository extends MySqlRepository implements InvoiceItemR
         }
 
         return $item;
+    }
+
+    public function createAsync(array $data): PromiseInterface
+    {
+        $query = '
+        INSERT INTO invoice_items (
+            invoice_id, 
+            description, 
+            quantity, 
+            unit_price, 
+            total
+        )
+        VALUES (?, ?, ?, ?, ?)';
+
+        return $this->queryAsync($query, [
+            $data['invoice_id'],
+            $data['description'],
+            $data['quantity'],
+            $data['unit_price'],
+            $data['total']
+        ])->then(
+            fn($result) => $this->findByIdAsync($result->insertId)
+        );
     }
 }

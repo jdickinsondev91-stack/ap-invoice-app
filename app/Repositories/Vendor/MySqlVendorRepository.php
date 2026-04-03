@@ -4,6 +4,7 @@ namespace App\Repositories\Vendor;
 
 use App\Models\Vendor;
 use App\Repositories\MySqlRepository;
+use React\Promise\PromiseInterface;
 
 class MySqlVendorRepository extends MySqlRepository implements VendorRepositoryInterface
 {
@@ -45,5 +46,15 @@ class MySqlVendorRepository extends MySqlRepository implements VendorRepositoryI
         }
 
         return $vendor;
+    }
+
+    public function findByIdAsync(int $id): PromiseInterface
+    {
+        $query = 'SELECT * FROM vendors WHERE id = ?';
+
+        return $this->queryAsync($query, [$id])
+            ->then(
+                fn($result) => isset($result->resultRows[0]) ? Vendor::fromRow($result->resultRows[0]) : null
+            );
     }
 }

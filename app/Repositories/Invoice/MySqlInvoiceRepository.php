@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceStatus;
 use App\Models\Vendor;
 use App\Repositories\MySqlRepository;
+use React\Promise\PromiseInterface;
 
 class MySqlInvoiceRepository extends MySqlRepository implements InvoiceRepositoryInterface
 {
@@ -113,6 +114,19 @@ class MySqlInvoiceRepository extends MySqlRepository implements InvoiceRepositor
                 ]
             )
         );
+    }
+
+    public function findPotentialDuplicatesAsync(int $vendorId, string $invoiceNumber): PromiseInterface
+    {
+        $query = $this->withRelationsSql() . 'WHERE vendor_id = ? AND invoice_number = ?';
+
+        return $this->queryAsync($query, [$vendorId, $invoiceNumber])
+            ->then(
+                fn($result) => array_map(
+                    fn(array $row) => $this->hydrateRelations($row),
+                    $result->resultRows
+                )
+            );
     }
 
     private function hydrateRelations(array $row): Invoice

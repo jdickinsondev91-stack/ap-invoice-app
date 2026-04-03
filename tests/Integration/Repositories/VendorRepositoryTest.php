@@ -6,6 +6,8 @@ use App\Models\Vendor;
 use App\Repositories\Vendor\MySqlVendorRepository;
 use App\Tests\Integration\DatabaseTestCase;
 
+use function React\Async\await;
+
 class VendorRepositoryTest extends DatabaseTestCase
 {
     private MySqlVendorRepository $repo;
@@ -61,6 +63,22 @@ class VendorRepositoryTest extends DatabaseTestCase
         $this->assertSame('New Supplier Ltd', $vendor->name);
         $this->assertSame('contact@newsupplier.example', $vendor->email);
         $this->assertIsInt($vendor->id);
+    }
+
+    public function testFindByIdAsyncReturnsCorrectVendor(): void
+    {
+        $vendor = \React\Async\await($this->repo->findByIdAsync(1));
+
+        $this->assertInstanceOf(Vendor::class, $vendor);
+        $this->assertSame(1, $vendor->id);
+        $this->assertSame('Acme Supplies Ltd', $vendor->name);
+    }
+
+    public function testFindByIdAsyncReturnsNullForNonExistentId(): void
+    {
+        $vendor = await($this->repo->findByIdAsync(999));
+
+        $this->assertNull($vendor);
     }
 
     public function testCreatePersistsToDatabase(): void

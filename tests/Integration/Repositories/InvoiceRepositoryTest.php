@@ -8,6 +8,8 @@ use App\Models\Vendor;
 use App\Repositories\Invoice\MySqlInvoiceRepository;
 use App\Tests\Integration\DatabaseTestCase;
 
+use function React\Async\await;
+
 class InvoiceRepositoryTest extends DatabaseTestCase
 {
     private MySqlInvoiceRepository $repo;
@@ -199,5 +201,26 @@ class InvoiceRepositoryTest extends DatabaseTestCase
         // INV-2024-001 belongs to vendor 1, not vendor 2
         $this->assertCount(1, $this->repo->findPotentialDuplicates(1, 'INV-2024-001'));
         $this->assertCount(0, $this->repo->findPotentialDuplicates(2, 'INV-2024-001'));
+    }
+
+    public function testFindPotentialDuplicatesAsyncReturnsMatchingInvoices(): void
+    {
+        $duplicates = await($this->repo->findPotentialDuplicatesAsync(1, 'INV-2024-001'));
+
+        $this->assertCount(1, $duplicates);
+        $this->assertSame(1, $duplicates[0]->id);
+    }
+
+    public function testFindPotentialDuplicatesAsyncReturnsEmptyWhenNoMatch(): void
+    {
+        $duplicates = await($this->repo->findPotentialDuplicatesAsync(1, 'INV-DOES-NOT-EXIST'));
+
+        $this->assertSame([], $duplicates);
+    }
+
+    public function testFindPotentialDuplicatesAsyncIsScopedToVendor(): void
+    {
+        $this->assertCount(1, await($this->repo->findPotentialDuplicatesAsync(1, 'INV-2024-001')));
+        $this->assertCount(0, await($this->repo->findPotentialDuplicatesAsync(2, 'INV-2024-001')));
     }
 }

@@ -4,6 +4,7 @@ namespace App\Repositories\InvoiceStatus;
 
 use App\Models\InvoiceStatus;
 use App\Repositories\MySqlRepository;
+use React\Promise\PromiseInterface;
 
 class MySqlInvoiceStatusRepository extends MySqlRepository implements InvoiceStatusRepositoryInterface
 {
@@ -33,5 +34,15 @@ class MySqlInvoiceStatusRepository extends MySqlRepository implements InvoiceSta
         $row = $this->fetchOne($query, [$slug]);
 
         return $row ? InvoiceStatus::fromRow($row) : null;
+    }
+
+    public function findBySlugAsync(string $slug): PromiseInterface
+    {
+        $query = 'SELECT * FROM invoice_statuses WHERE slug = ?';
+
+        return $this->queryAsync($query, [$slug])
+                    ->then(
+                        fn($result) => isset($result->resultRows[0]) ? InvoiceStatus::fromRow($result->resultRows[0]) : null
+                    );
     }
 }
