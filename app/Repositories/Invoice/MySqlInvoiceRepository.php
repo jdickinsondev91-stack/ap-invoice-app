@@ -32,7 +32,6 @@ class MySqlInvoiceRepository extends MySqlRepository implements InvoiceRepositor
 
     public function create(array $data): Invoice
     {
-
         $query = '
         INSERT INTO invoices (
                 vendor_id,
