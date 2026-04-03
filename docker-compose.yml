@@ -24,6 +24,9 @@ services:
         - action: sync+restart
           path: ./public
           target: /app/public
+        - action: sync
+          path: ./tests
+          target: /app/tests
         - action: rebuild
           path: composer.json
 
