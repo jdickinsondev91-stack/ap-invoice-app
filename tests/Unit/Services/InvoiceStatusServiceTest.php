@@ -173,6 +173,19 @@ class InvoiceStatusServiceTest extends TestCase
         $this->service->transition(1, 'pending');
     }
 
+    public function testGetAllDelegatesToRepository(): void
+    {
+        $statuses = [$this->makeStatus(1, 'pending'), $this->makeStatus(2, 'approved')];
+
+        $this->invoiceStatusRepository
+            ->method('findAll')
+            ->willReturn($statuses);
+
+        $result = $this->service->getAll();
+
+        $this->assertSame($statuses, $result);
+    }
+
     public function testGetHistoryDelegatesToRepository(): void
     {
         $history = [$this->makeHistory()];

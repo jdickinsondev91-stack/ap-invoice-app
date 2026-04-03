@@ -58,6 +58,14 @@ class InvoiceStatusService
     }
 
     /**
+     * @return InvoiceStatus[]
+     */
+    public function getAll(): array
+    {
+        return $this->invoiceStatusRepository->findAll();
+    }
+
+    /**
      * @return InvoiceStatusHistory[]
      */
     public function getHistory(int $invoiceId): array
