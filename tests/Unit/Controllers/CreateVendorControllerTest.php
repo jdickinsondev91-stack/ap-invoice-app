@@ -20,14 +20,14 @@ class CreateVendorControllerTest extends TestCase
         $this->controller = new CreateVendorController($this->service);
     }
 
-    private function makeRequest(mixed $body): ServerRequest
+    private function makeRequest(array $body): ServerRequest
     {
-        return new ServerRequest(
+        return (new ServerRequest(
             'POST',
             'http://localhost/vendors',
             ['Content-Type' => 'application/json'],
-            is_string($body) ? $body : json_encode($body)
-        );
+            json_encode($body)
+        ))->withParsedBody($body);
     }
 
     private function makeVendor(): Vendor
@@ -54,13 +54,6 @@ class CreateVendorControllerTest extends TestCase
         $body = json_decode((string) $response->getBody(), true);
         $this->assertSame(1, $body['id']);
         $this->assertSame('Acme Supplies Ltd', $body['name']);
-    }
-
-    public function testReturns400ForInvalidJson(): void
-    {
-        $response = ($this->controller)($this->makeRequest('not-valid-json'));
-
-        $this->assertSame(400, $response->getStatusCode());
     }
 
     public function testReturns422ForMissingName(): void

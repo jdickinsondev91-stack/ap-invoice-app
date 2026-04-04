@@ -14,14 +14,9 @@ class UpdateInvoiceStatusController
         private readonly InvoiceStatusService $invoiceStatusService
     ) {}
 
-    /** Some justification on why I haven't used a DTO, it felt overkill for one property */
     public function __invoke(ServerRequestInterface $request): Response
     {
-        $body = json_decode((string) $request->getBody(), true);
-
-        if (!is_array($body)) {
-            return Response::json(['error' => 'Invalid JSON body.'])->withStatus(400);
-        }
+        $body = $request->getParsedBody();
 
         $toSlug = $body['status'] ?? null;
 

@@ -19,22 +19,16 @@ use App\UnitOfWork\UnitOfWorkInterface;
 use FrameworkX\Container;
 use React\Mysql\MysqlClient;
 
-$db = new MysqlClient(
-    getenv('DB_USER') . ':' .
-    getenv('DB_PASSWORD') . '@' .
-    getenv('DB_HOST') . ':' .
-    getenv('DB_PORT') . '/' .
-    getenv('DB_NAME')
-);
-
-return new Container([
-    MysqlClient::class => fn() => $db,
-    DuplicateInvoiceFlagRepositoryInterface::class => fn(MysqlClient $db) => new MySqlDuplicateInvoiceFlagRepository($db),
-    InvoiceRepositoryInterface::class => fn(MysqlClient $db) => new MySqlInvoiceRepository($db),
-    InvoiceItemRepositoryInterface::class => fn(MysqlClient $db) => new MySqlInvoiceItemRepository($db),
-    InvoiceStatusRepositoryInterface::class => fn(MysqlClient $db) => new MySqlInvoiceStatusRepository($db),
-    InvoiceStatusHistoryRepositoryInterface::class => fn(MysqlClient $db) => new MySqlInvoiceStatusHistoryRepository($db),
-    InvoiceStatusTransitionRepositoryInterface::class => fn(MysqlClient $db) => new MySqlInvoiceStatusTransitionRepository($db),
-    VendorRepositoryInterface::class => fn(MysqlClient $db) => new MySqlVendorRepository($db),
-    UnitOfWorkInterface::class => fn(MysqlClient $db) => new MySqlUnitOfWork($db),
-]);
+return function (MysqlClient $db): Container {
+    return new Container([
+        MysqlClient::class => fn() => $db,
+        DuplicateInvoiceFlagRepositoryInterface::class => MySqlDuplicateInvoiceFlagRepository::class,
+        InvoiceRepositoryInterface::class => MySqlInvoiceRepository::class,
+        InvoiceItemRepositoryInterface::class => MySqlInvoiceItemRepository::class,
+        InvoiceStatusRepositoryInterface::class => MySqlInvoiceStatusRepository::class,
+        InvoiceStatusHistoryRepositoryInterface::class => MySqlInvoiceStatusHistoryRepository::class,
+        InvoiceStatusTransitionRepositoryInterface::class =>  MySqlInvoiceStatusTransitionRepository::class,
+        VendorRepositoryInterface::class => MySqlVendorRepository::class,
+        UnitOfWorkInterface::class => MySqlUnitOfWork::class,
+    ]);
+};

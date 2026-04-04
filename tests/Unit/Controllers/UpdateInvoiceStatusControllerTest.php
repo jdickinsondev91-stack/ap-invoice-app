@@ -21,14 +21,16 @@ class UpdateInvoiceStatusControllerTest extends TestCase
         $this->controller = new UpdateInvoiceStatusController($this->service);
     }
 
-    private function makeRequest(int $id, mixed $body): ServerRequest
+    private function makeRequest(int $id, array $body): ServerRequest
     {
         return (new ServerRequest(
             'PATCH',
             "http://localhost/invoices/{$id}/status",
             ['Content-Type' => 'application/json'],
-            is_string($body) ? $body : json_encode($body)
-        ))->withAttribute('id', (string) $id);
+            json_encode($body)
+        ))
+            ->withAttribute('id', (string) $id)
+            ->withParsedBody($body);
     }
 
     private function makeInvoice(int $statusId = 2): Invoice
@@ -55,13 +57,6 @@ class UpdateInvoiceStatusControllerTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true);
         $this->assertSame(1, $body['id']);
-    }
-
-    public function testReturns400ForInvalidJson(): void
-    {
-        $response = ($this->controller)($this->makeRequest(1, 'not-valid-json'));
-
-        $this->assertSame(400, $response->getStatusCode());
     }
 
     public function testReturns422WhenStatusFieldMissing(): void

@@ -16,14 +16,8 @@ class CreateVendorController
 
     public function __invoke(ServerRequestInterface $request): Response
     {
-        $body = json_decode((string) $request->getBody(), true);
-
-        if (!is_array($body)) {
-            return Response::json(['error' => 'Invalid JSON body.'])->withStatus(400);
-        }
-
         try {
-            $vendor = $this->vendorService->create(CreateVendorDTO::fromArray($body));
+            $vendor = $this->vendorService->create(CreateVendorDTO::fromArray($request->getParsedBody()));
         } catch (ValidationException | \InvalidArgumentException $e) {
             return Response::json(['error' => $e->getMessage()])->withStatus(422);
         }
