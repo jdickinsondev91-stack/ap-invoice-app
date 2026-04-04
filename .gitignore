@@ -1,0 +1,24 @@
+# Dependencies
+/vendor/
+
+# Environment
+.env
+.env.local
+
+# Docker
+mysql_data/
+
+# PHPUnit
+.phpunit.result.cache
+/coverage/
+
+# IDE
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
