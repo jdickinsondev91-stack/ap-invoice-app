@@ -4,6 +4,8 @@ namespace App\Models;
 
 class InvoiceStatusHistory extends Model
 {
+    public const DEFAULT_CHANGED_BY = 'system';
+
     public function __construct(
         public readonly int $id,
         public readonly int $invoiceId,

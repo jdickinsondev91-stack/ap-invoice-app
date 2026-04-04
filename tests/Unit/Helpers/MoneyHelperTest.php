@@ -64,4 +64,39 @@ class MoneyHelperTest extends TestCase
         $original = 47500;
         $this->assertSame($original, MoneyHelper::toPence(MoneyHelper::toDecimal($original)));
     }
+
+    public function testMultiplyWithWholeQuantity(): void
+    {
+        // 10 x 5000p = 50000p
+        $this->assertSame(50000, MoneyHelper::multiply(5000, '10'));
+    }
+
+    public function testMultiplyWithDecimalQuantity(): void
+    {
+        // 2.5 x 19000p = 47500p
+        $this->assertSame(47500, MoneyHelper::multiply(19000, '2.5000'));
+    }
+
+    public function testMultiplyWithIntQuantity(): void
+    {
+        // 5 x 20000p = 100000p
+        $this->assertSame(100000, MoneyHelper::multiply(20000, 5));
+    }
+
+    public function testMultiplyReturnsInt(): void
+    {
+        $this->assertIsInt(MoneyHelper::multiply(5000, '10'));
+    }
+
+    public function testMultiplyRoundsCorrectly(): void
+    {
+        // 3 x 3333p = 9999p (no rounding needed)
+        $this->assertSame(9999, MoneyHelper::multiply(3333, '3'));
+    }
+
+    public function testMultiplyWithFractionalResult(): void
+    {
+        // 0.3333 x 100p = 33.33p → 33.33 + 0.5 = 33.83 truncated = 33p
+        $this->assertSame(33, MoneyHelper::multiply(100, '0.3333'));
+    }
 }

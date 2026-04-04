@@ -14,6 +14,8 @@ use App\Repositories\InvoiceStatusTransition\InvoiceStatusTransitionRepositoryIn
 use App\Repositories\InvoiceStatusTransition\MySqlInvoiceStatusTransitionRepository;
 use App\Repositories\Vendor\MySqlVendorRepository;
 use App\Repositories\Vendor\VendorRepositoryInterface;
+use App\UnitOfWork\MySqlUnitOfWork;
+use App\UnitOfWork\UnitOfWorkInterface;
 use FrameworkX\Container;
 use React\Mysql\MysqlClient;
 
@@ -34,4 +36,5 @@ return new Container([
     InvoiceStatusHistoryRepositoryInterface::class => fn(MysqlClient $db) => new MySqlInvoiceStatusHistoryRepository($db),
     InvoiceStatusTransitionRepositoryInterface::class => fn(MysqlClient $db) => new MySqlInvoiceStatusTransitionRepository($db),
     VendorRepositoryInterface::class => fn(MysqlClient $db) => new MySqlVendorRepository($db),
+    UnitOfWorkInterface::class => fn(MysqlClient $db) => new MySqlUnitOfWork($db),
 ]);

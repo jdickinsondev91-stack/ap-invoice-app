@@ -15,6 +15,7 @@ mysql_data/
 # IDE
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 

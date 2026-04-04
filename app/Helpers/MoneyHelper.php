@@ -24,4 +24,11 @@ class MoneyHelper
 
         return (int) bcadd($multiplied, '0.5', 0);
     }
+
+    public static function multiply(int $value, string|int $multiplier): int 
+    {
+        $result = bcmul((string) $value, (string) $multiplier, 4);
+
+        return (int) bcadd($result, '0.5', 0);
+    }
 }
